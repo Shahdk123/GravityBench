@@ -62,6 +62,8 @@ def main():
             try:
                 # Use the non-empirical, non-verifying version for the "cleanest" true answer
                 true_answer = scenario_instance.true_answer(verification=False, return_empirical=False)
+                # Convert to string to ensure consistent data type across all scenarios
+                true_answer = str(true_answer)
             except Exception as e:
                 print(f"Error getting true_answer for {scenario_name} - {variation_name}: {e}")
                 continue
