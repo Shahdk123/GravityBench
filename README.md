@@ -43,7 +43,7 @@ The benchmark is inspired by the historical development of science (the two-body
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/NolanKoblischke/GravityBench.git # Official Repo URL
+    git clone https://github.com/NolanKoblischke/GravityBench.git
     cd GravityBench
     ```
 
@@ -66,10 +66,10 @@ The benchmark is inspired by the historical development of science (the two-body
     # Activate the environment (optional - uv run will auto-activate)
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
     ```
-    
-    Then run commands with `uv run`:
+
+    Then run commands normally:
     ```bash
-    uv run python scripts/run_agent.py --scenarios period --model gpt-4o
+    python scripts/run_agent.py --scenarios period --model gpt-4o
     ```
 
     ### Option B: Conda/Mamba
@@ -127,10 +127,6 @@ The benchmark is inspired by the historical development of science (the two-body
     This example runs the agent on the `period.py` scenario task using the `gpt-4o` model with full observation access.
     
     ```bash
-    # With uv (recommended)
-    uv run python scripts/run_agent.py --scenarios period --model gpt-4o
-    
-    # With conda/pip
     python scripts/run_agent.py --scenarios period --model gpt-4o
     ```
     
@@ -140,15 +136,6 @@ The benchmark is inspired by the historical development of science (the two-body
     This example runs the agent on the `max_velocity_star1.py` scenario task, using a Claude model, with a budget of 100 total observations, requesting up to 10 at a time.
     
     ```bash
-    # With uv (recommended)
-    uv run python scripts/run_agent.py \
-        --scenarios max_velocity_star1 \
-        --model claude-3-5-sonnet-20241022 \
-        --row-wise \
-        --max-observations-total 100 \
-        --max-observations-per-request 10
-    
-    # With conda/pip
     python scripts/run_agent.py \
         --scenarios max_velocity_star1 \
         --model claude-3-5-sonnet-20241022 \
@@ -161,8 +148,6 @@ The benchmark is inspired by the historical development of science (the two-body
     After each run, navigate to the `outputs/` (or `outputs_range_of_N/`) directory. Inside the run-specific subfolder (e.g., `outputs/gpt-4o_<timestamp>/`), you will find:
     -   A `<model>_<timestamp>.json` file containing detailed run data.
     -   A `<model>_<timestamp>.html` file, which is an interactive report. Open this in your browser to see a summary and step-by-step logs for each scenario attempt.
-
-    *Note: Running agents, especially with powerful models like GPT-4o or Claude Opus, will incur API costs.*
 
 ## Repository Structure
 
@@ -192,10 +177,6 @@ The benchmark is inspired by the historical development of science (the two-body
 To ensure the environment and core logic are functioning correctly, you can run the unit tests:
 
 ```bash
-# With uv (recommended)
-uv run python -m unittest discover -s tests
-
-# With conda/pip
 python -m unittest discover -s tests
 ```
 
@@ -207,29 +188,15 @@ To reproduce the main results presented in the paper (arXiv:2501.18411), follow 
     Refer to Section 4 of the paper for details on models and configurations tested.
     *   **Full-Observation Mode:**
         ```bash
-        # With uv (recommended)
-        uv run python scripts/run_agent.py --simulate-all --model gpt-4o-mini-2024-07-18
-        uv run python scripts/run_agent.py --simulate-all --model claude-3-5-sonnet-20241022
-        
-        # With conda/pip
         python scripts/run_agent.py --simulate-all --model gpt-4o-mini-2024-07-18
         python scripts/run_agent.py --simulate-all --model claude-3-5-sonnet-20241022
         ```
     *   **Budgeted-Observation Mode (e.g., 100 observations):**
         ```bash
-        # With uv (recommended)
-        uv run python scripts/run_agent.py --simulate-all --model gpt-4o-mini-2024-07-18 --row-wise --max-observations-total 100
-        
-        # With conda/pip
         python scripts/run_agent.py --simulate-all --model gpt-4o-mini-2024-07-18 --row-wise --max-observations-total 100
         ```
     *   **Varying Observation Budgets (for specific scenarios/models, see Figure 2 in paper):**
         ```bash
-        # With uv (recommended)
-        uv run python scripts/run_agent_range_of_budgets.py --model gpt-4o-2024-11-20 --scenarios max_velocity_star1 periastron --variation "9.6 M, 3.1 M" --variation "3.1 M, 0.18 M, Elliptical, Single Orbit"
-        uv run python scripts/run_agent_range_of_budgets.py --model claude-3-5-sonnet-20241022 --scenarios max_velocity_star1 periastron --variation "9.6 M, 3.1 M" --variation "3.1 M, 0.18 M, Elliptical, Single Orbit"
-        
-        # With conda/pip
         python scripts/run_agent_range_of_budgets.py --model gpt-4o-2024-11-20 --scenarios max_velocity_star1 periastron --variation "9.6 M, 3.1 M" --variation "3.1 M, 0.18 M, Elliptical, Single Orbit"
         python scripts/run_agent_range_of_budgets.py --model claude-3-5-sonnet-20241022 --scenarios max_velocity_star1 periastron --variation "9.6 M, 3.1 M" --variation "3.1 M, 0.18 M, Elliptical, Single Orbit"
         ```
@@ -237,10 +204,6 @@ To reproduce the main results presented in the paper (arXiv:2501.18411), follow 
 2.  **Generate Expert Baseline Data:**
     This script calculates the performance of the expert-defined empirical solutions.
     ```bash
-    # With uv (recommended)
-    uv run python scripts/run_expert_solution.py
-    
-    # With conda/pip
     python scripts/run_expert_solution.py
     ```
     This will create `outputs/expert_baseline_results.csv`.
@@ -248,20 +211,12 @@ To reproduce the main results presented in the paper (arXiv:2501.18411), follow 
 3.  **Aggregate Raw Experiment Results:**
     After running the agent experiments, combine their JSON outputs:
     ```bash
-    # With uv (recommended)
-    uv run python outputs/combine_results.py
-    
-    # With conda/pip
     python outputs/combine_results.py
     ```
     This creates `outputs/combined_results.csv` and `outputs/chat_histories.csv`.
 
     For results from `run_agent_range_of_budgets.py`:
     ```bash
-    # With uv (recommended)
-    uv run python outputs_range_of_N/aggregate.py
-    
-    # With conda/pip
     python outputs_range_of_N/aggregate.py
     ```
     This creates `outputs_range_of_N/aggregated_results.csv`.
@@ -269,15 +224,6 @@ To reproduce the main results presented in the paper (arXiv:2501.18411), follow 
 4.  **Generate Figures and Tables:**
     Run the analysis scripts located in the `analysis/` directory. These scripts use the aggregated CSV files.
     ```bash
-    # With uv (recommended)
-    uv run python analysis/table1_scores.py       # For Table 1
-    uv run python analysis/table2_massassumption.py # For Table 2 in Appendix
-    uv run python analysis/fig_casestudy.py       # For Figure 3 (Traces) - Note: this script uses specific hardcoded observation data.
-    uv run python analysis/plot_100_obs_human_performance.py # For Figure 4 (Thresholds)
-    uv run python outputs_range_of_N/fig_maxvelocity_and_periastron.py # For Figure 2 (Varying Budgets)
-    uv run python outputs_range_of_N/fig_periastron.py # For Figure 5 (Periastron Case Study)
-    
-    # With conda/pip
     python analysis/table1_scores.py       # For Table 1
     python analysis/table2_massassumption.py # For Table 2 in Appendix
     python analysis/fig_casestudy.py       # For Figure 3 (Traces) - Note: this script uses specific hardcoded observation data.
