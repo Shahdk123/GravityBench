@@ -125,6 +125,8 @@ celerybeat-schedule
 celerybeat.pid
 
 huggingface/dataset.jsonl
+huggingface/test.jsonl
+
 
 # SageMath parsed files
 *.sage.py
