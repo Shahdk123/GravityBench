@@ -98,7 +98,7 @@ def main():
 
     if not combined_df.empty:
         # Remove missing scenarios logic
-        combined_df.to_csv('combined_results.csv', index=False)
+        combined_df.to_csv('outputs/combined_results.csv', index=False)
         print(f"Saved aggregated results to combined_results.csv")
     else:
         print("No valid scenarios found. Skipping outputs/combined_results.csv generation.")
@@ -142,7 +142,7 @@ def main():
 
     if dfs_chat:
         combined_chat_df = pd.concat(dfs_chat, ignore_index=True)
-        combined_chat_df.to_csv('chat_histories.csv', index=False)
+        combined_chat_df.to_csv('outputs/chat_histories.csv', index=False)
         print(f"Saved {len(combined_chat_df)} chat histories to chat_histories.csv")
     else:
         print("No chat histories found. Skipping outputs/chat_histories.csv generation.")

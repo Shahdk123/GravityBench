@@ -308,9 +308,11 @@ When using `Observe`:
         Returns:
             Status message with observation results and remaining budget
         """
-        # Normalize input to list
+        # Normalize input to list and ensure all values are floats
         if not isinstance(times_requested, list):
-            times_requested = [times_requested]
+            times_requested = [float(times_requested)]
+        else:
+            times_requested = [float(t) for t in times_requested]
 
         # Validate request limit
         if len(times_requested) > maximum_observations_per_request:

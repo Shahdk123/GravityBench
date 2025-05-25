@@ -42,7 +42,7 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_all_scenarios
         scenarios = get_all_scenarios()
-        print(f'✓ Successfully loaded {len(scenarios)} scenarios')
+        print(f'[OK] Successfully loaded {len(scenarios)} scenarios')
         assert len(scenarios) > 0, 'No scenarios found'
         "
     
@@ -53,11 +53,11 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_scenario
         scenario = get_scenario('period', '9.6 M, 3.1 M')
-        print('✓ Successfully created scenario:', scenario)
+        print('[OK] Successfully created scenario:', scenario)
         csv_path = f'scenarios/sims/{scenario.binary_sim.filename}.csv'
         import os
         assert os.path.exists(csv_path), f'CSV file {csv_path} was not created'
-        print('✓ CSV simulation file created successfully')
+        print('[OK] CSV simulation file created successfully')
         "
 
   test-conda:
@@ -100,7 +100,7 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_all_scenarios
         scenarios = get_all_scenarios()
-        print(f'✓ Successfully loaded {len(scenarios)} scenarios')
+        print(f'[OK] Successfully loaded {len(scenarios)} scenarios')
         assert len(scenarios) > 0, 'No scenarios found'
         "
     
@@ -112,11 +112,11 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_scenario
         scenario = get_scenario('period', '9.6 M, 3.1 M')
-        print('✓ Successfully created scenario:', scenario)
+        print('[OK] Successfully created scenario:', scenario)
         csv_path = f'scenarios/sims/{scenario.binary_sim.filename}.csv'
         import os
         assert os.path.exists(csv_path), f'CSV file {csv_path} was not created'
-        print('✓ CSV simulation file created successfully')
+        print('[OK] CSV simulation file created successfully')
         "
 
   test-pip:
@@ -174,7 +174,7 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_all_scenarios
         scenarios = get_all_scenarios()
-        print(f'✓ Successfully loaded {len(scenarios)} scenarios')
+        print(f'[OK] Successfully loaded {len(scenarios)} scenarios')
         assert len(scenarios) > 0, 'No scenarios found'
         "
     
@@ -187,7 +187,7 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_all_scenarios
         scenarios = get_all_scenarios()
-        print(f'✓ Successfully loaded {len(scenarios)} scenarios')
+        print(f'[OK] Successfully loaded {len(scenarios)} scenarios')
         assert len(scenarios) > 0, 'No scenarios found'
         "
     
@@ -200,11 +200,11 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_scenario
         scenario = get_scenario('period', '9.6 M, 3.1 M')
-        print('✓ Successfully created scenario:', scenario)
+        print('[OK] Successfully created scenario:', scenario)
         csv_path = f'scenarios/sims/{scenario.binary_sim.filename}.csv'
         import os
         assert os.path.exists(csv_path), f'CSV file {csv_path} was not created'
-        print('✓ CSV simulation file created successfully')
+        print('[OK] CSV simulation file created successfully')
         "
     
     - name: Test basic simulation (Windows)
@@ -216,11 +216,11 @@ jobs:
         sys.path.insert(0, '.')
         from scripts.scenarios_config import get_scenario
         scenario = get_scenario('period', '9.6 M, 3.1 M')
-        print('✓ Successfully created scenario:', scenario)
+        print('[OK] Successfully created scenario:', scenario)
         csv_path = f'scenarios/sims/{scenario.binary_sim.filename}.csv'
         import os
         assert os.path.exists(csv_path), f'CSV file {csv_path} was not created'
-        print('✓ CSV simulation file created successfully')
+        print('[OK] CSV simulation file created successfully')
         "
 
   test-integration:
@@ -244,7 +244,7 @@ jobs:
         from agents.tools.observe_tool import observe_tool, execute_observe_tool
         from agents.tools.python_repl_tool import python_repl_tool, execute_python_repl
         from agents.tools.submit_answer_tool import submit_answer_tool, execute_submit_answer
-        print('✓ All agent tools imported successfully')
+        print('[OK] All agent tools imported successfully')
         "
     
     - name: Test that config files are valid
@@ -253,10 +253,10 @@ jobs:
         import json
         with open('config.json', 'r') as f:
             config = json.load(f)
-        print('✓ config.json is valid JSON')
+        print('[OK] config.json is valid JSON')
         assert 'TEMPERATURE' in config
         assert 'MAX_ATTEMPTS' in config
-        print('✓ config.json has required fields')
+        print('[OK] config.json has required fields')
         "
     
     - name: Test scenarios directory structure
@@ -266,7 +266,7 @@ jobs:
         import glob
         scenario_files = glob.glob('scenarios/*.py')
         scenario_files = [f for f in scenario_files if not f.endswith('__init__.py')]
-        print(f'✓ Found {len(scenario_files)} scenario files')
+        print(f'[OK] Found {len(scenario_files)} scenario files')
         assert len(scenario_files) > 10, 'Expected more than 10 scenario files'
         
         # Test that each scenario file can be imported
@@ -276,9 +276,9 @@ jobs:
             module_name = os.path.basename(scenario_file)[:-3]  # Remove .py
             try:
                 exec(f'from scenarios.{module_name} import Scenario')
-                print(f'✓ scenarios.{module_name} imports successfully')
+                print(f'[OK] scenarios.{module_name} imports successfully')
             except Exception as e:
-                print(f'✗ Failed to import scenarios.{module_name}: {e}')
+                print(f'[FAIL] Failed to import scenarios.{module_name}: {e}')
                 raise
         "
     
@@ -288,5 +288,5 @@ jobs:
         import os
         os.makedirs('scenarios/sims', exist_ok=True)
         os.makedirs('scenarios/detailed_sims', exist_ok=True)
-        print('✓ Simulation directories created')
+        print('[OK] Simulation directories created')
         " 
