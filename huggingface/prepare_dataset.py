@@ -18,6 +18,11 @@ _DESCRIPTION = """\
 A dataset for evaluating AI agents on physics discovery tasks in simulated binary star systems.
 Each instance provides a task prompt, simulation data (as a CSV string), the true answer,
 and parameters for evaluating correctness.
+
+The dataset includes two splits:
+- 'validation': Contains all metadata but CSV data is replaced with '[CSV data omitted for preview]' 
+  to enable the HuggingFace dataset viewer
+- 'test': Contains the full dataset with complete simulation CSV data for actual use
 """
 
 _HOMEPAGE = "https://huggingface.co/datasets/GravityBench/GravityBench"
@@ -57,8 +62,12 @@ class GravityBenchSimple(datasets.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager):
         return [
             datasets.SplitGenerator(
-                name=datasets.Split.TRAIN,
-                gen_kwargs={"filepath": "dataset.jsonl"},
+                name=datasets.Split.TEST,
+                gen_kwargs={"filepath": "test.jsonl"},
+            ),
+            datasets.SplitGenerator(
+                name=datasets.Split.VALIDATION,
+                gen_kwargs={"filepath": "validation.jsonl"},
             ),
         ]
 

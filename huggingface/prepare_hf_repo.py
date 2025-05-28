@@ -38,66 +38,107 @@ def get_scenario_instance(scenario_name, variation_name, scenario_folder='scenar
         return None
 
 
+def create_dataset_item(scenario_name, config_data, variation_name, include_full_csv=True):
+    """
+    Create a dataset item for a given scenario and variation.
+    
+    Args:
+        scenario_name: Name of the scenario
+        config_data: Configuration data for the scenario
+        variation_name: Name of the variation
+        include_full_csv: If True, include full CSV content. If False, use placeholder.
+    
+    Returns:
+        Dictionary representing the dataset item, or None if creation failed.
+    """
+    print(f"Processing: {scenario_name} - {variation_name}")
+
+    scenario_instance = get_scenario_instance(scenario_name, variation_name)
+    if not scenario_instance:
+        print(f"Could not get instance for {scenario_name} - {variation_name}. Skipping.")
+        return None
+
+    task_prompt = scenario_instance.binary_sim.task
+    expected_units = scenario_instance.binary_sim.final_answer_units
+    
+    try:
+        # Use the non-empirical, non-verifying version for the "cleanest" true answer
+        true_answer = scenario_instance.true_answer(verification=False, return_empirical=False)
+        # Convert to string to ensure consistent data type across all scenarios
+        true_answer = str(true_answer)
+    except Exception as e:
+        print(f"Error getting true_answer for {scenario_name} - {variation_name}: {e}")
+        return None
+
+    sim_csv_filename = f"{variation_name}.csv"
+    sim_csv_path = os.path.join("scenarios", "sims", sim_csv_filename)
+
+    if not os.path.exists(sim_csv_path):
+        print(f"CSV file not found: {sim_csv_path}. Skipping.")
+        return None
+
+    # Handle CSV content based on split type
+    if include_full_csv:
+        with open(sim_csv_path, 'r', encoding='utf-8') as f_csv:
+            simulation_csv_content = f_csv.read()
+    else:
+        # For preview split, use placeholder
+        simulation_csv_content = "[CSV data omitted for preview]"
+
+    scenario_id = f"{scenario_name}_{variation_name.replace(' ', '_').replace(',', '').replace('.', 'p')}"
+    budget_obs_threshold = config_data.get("correct_threshold_percentage_based_on_100_observations", 5.0)
+
+    return {
+        "scenario_id": scenario_id,
+        "scenario_name": scenario_name,
+        "variation_name": variation_name,
+        "task_prompt": task_prompt,
+        "expected_units": expected_units,
+        "true_answer": true_answer,
+        "full_obs_threshold_percent": 5.0,
+        "budget_obs_threshold_percent": float(budget_obs_threshold),
+        "simulation_csv_filename": sim_csv_filename,
+        "simulation_csv_content": simulation_csv_content,
+    }
+
+
 def main():
     all_scenario_configs = load_scenarios_config_json() # This is from your scenarios_config.json
-    dataset_items = []
-
+    
     output_dir = "huggingface"
     os.makedirs(output_dir, exist_ok=True)
 
+    # Create both splits
+    test_items = []
+    preview_items = []
+
     for scenario_name, config_data in all_scenario_configs.items():
-        budget_obs_threshold = config_data.get("correct_threshold_percentage_based_on_100_observations", 5.0) # Default if missing
-
         for variation_name in config_data.get("variations", []):
-            print(f"Processing: {scenario_name} - {variation_name}")
-
-            scenario_instance = get_scenario_instance(scenario_name, variation_name)
-            if not scenario_instance:
-                print(f"Could not get instance for {scenario_name} - {variation_name}. Skipping.")
-                continue
-
-            task_prompt = scenario_instance.binary_sim.task
-            expected_units = scenario_instance.binary_sim.final_answer_units
             
-            try:
-                # Use the non-empirical, non-verifying version for the "cleanest" true answer
-                true_answer = scenario_instance.true_answer(verification=False, return_empirical=False)
-                # Convert to string to ensure consistent data type across all scenarios
-                true_answer = str(true_answer)
-            except Exception as e:
-                print(f"Error getting true_answer for {scenario_name} - {variation_name}: {e}")
-                continue
+            # Create test item (with full CSV)
+            test_item = create_dataset_item(scenario_name, config_data, variation_name, include_full_csv=True)
+            if test_item:
+                test_items.append(test_item)
+            
+            # Create preview item (with CSV placeholder)
+            preview_item = create_dataset_item(scenario_name, config_data, variation_name, include_full_csv=False)
+            if preview_item:
+                preview_items.append(preview_item)
 
-            sim_csv_filename = f"{variation_name}.csv"
-            sim_csv_path = os.path.join("scenarios", "sims", sim_csv_filename)
-
-            if not os.path.exists(sim_csv_path):
-                print(f"CSV file not found: {sim_csv_path}. Skipping.")
-                continue
-
-            with open(sim_csv_path, 'r', encoding='utf-8') as f_csv:
-                simulation_csv_content = f_csv.read()
-
-            scenario_id = f"{scenario_name}_{variation_name.replace(' ', '_').replace(',', '').replace('.', 'p')}"
-
-            dataset_items.append({
-                "scenario_id": scenario_id,
-                "scenario_name": scenario_name,
-                "variation_name": variation_name,
-                "task_prompt": task_prompt,
-                "expected_units": expected_units,
-                "true_answer": true_answer,
-                "full_obs_threshold_percent": 5.0,
-                "budget_obs_threshold_percent": float(budget_obs_threshold),
-                "simulation_csv_filename": sim_csv_filename,
-                "simulation_csv_content": simulation_csv_content,
-            })
-
-    output_jsonl_path = os.path.join(output_dir, "dataset.jsonl")
-    with open(output_jsonl_path, 'w', encoding='utf-8') as f_out:
-        for item in dataset_items:
+    # Write test split
+    test_jsonl_path = os.path.join(output_dir, "test.jsonl")
+    with open(test_jsonl_path, 'w', encoding='utf-8') as f_out:
+        for item in test_items:
             f_out.write(json.dumps(item) + "\n")
-    print(f"Dataset written to {output_jsonl_path}")
+    print(f"test dataset written to {test_jsonl_path} ({len(test_items)} items)")
+
+    # Write preview split
+    preview_jsonl_path = os.path.join(output_dir, "preview.jsonl")
+    with open(preview_jsonl_path, 'w', encoding='utf-8') as f_out:
+        for item in preview_items:
+            f_out.write(json.dumps(item) + "\n")
+    print(f"Preview dataset written to {preview_jsonl_path} ({len(preview_items)} items)")
+
 
 if __name__ == "__main__":
     main()
