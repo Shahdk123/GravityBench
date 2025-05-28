@@ -12,6 +12,9 @@ Our range of tasks include difficult problems, such as determining how we modifi
 
 These questions challenge AI agents with skills that mirror real-world science, including iterative reasoning, planning, and generalization.
 
+![Flowchart](analysis/plots/flowchart5.png)
+
+
 ## Key Features
 
 -   **Physics-based Environment:**
@@ -170,6 +173,7 @@ If you use Gravity-Bench in your research, please cite our paper:
       primaryClass={cs.AI}
 }
 ```
+![Simulation Example](analysis/plots/Simulations.png)
 
 ## License
 
