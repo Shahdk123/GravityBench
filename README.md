@@ -2,37 +2,34 @@
 
 [![Paper](https://img.shields.io/badge/arXiv-2501.18411-B31B1B)](https://arxiv.org/abs/2501.18411)
 [![Website](https://img.shields.io/badge/Website-gravitybench.github.io-blue)](https://gravitybench.github.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) <!-- Or your chosen license -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
-This repository contains the code and benchmark for the ICML 2025 paper: **"Gravity-Bench-v1: A Benchmark on Gravitational Physics Discovery for Agents"** (arXiv:2501.18411). Visit our project website at [gravitybench.github.io](https://gravitybench.github.io/).
+This repository contains the code and benchmark for the ICML 2025 paper: **"Gravity-Bench-v1: A Benchmark on Gravitational Physics Discovery for Agents"** (arXiv:2501.18411). Visit our project website at [gravitybench.github.io](https://gravitybench.github.io/) for discussion on the results.
 
-Gravity-Bench is a benchmark that evaluates AI agents on discovering gravitational physics through iterative observation and data analysis. The environment is built around two-body gravitational simulations provided by the [Rebound](https://github.com/hannorein/rebound) library, extended with additional scenarios (e.g., modified gravity, linear drag) to enable testing on out-of-distribution physics. Agents must actively query the environment (observing the positions of stars over time) and reason about the data to solve a range of tasks, such as determining masses, orbital elements, and energy-related properties.
+Gravity-Bench is a benchmark that evaluates AI agents on solving gravitational physics problems by providing them tools to **observe** a two-body gravitational system and **write code** to solve the problem. 
 
-The benchmark is inspired by the historical development of science (the two-body problem of gravitational dynamics) and challenges AI agents with tasks that mirror real-world scientific inquiry, requiring iterative reasoning, dynamic planning, and robust generalization.
+Our range of tasks include difficult problems, such as determining how we modified gravity and determining the coefficient of drag that has been added to the system (problems not often seen in textbooks).
+
+These questions challenge AI agents with skills that mirror real-world science, including iterative reasoning, planning, and generalization.
 
 ## Key Features
 
 -   **Physics-based Environment:**
-    Uses high-precision N-body simulations from Rebound, capturing realistic two-body orbital dynamics. Simulations are configured in `scripts/scenarios_config.py` and run via `generalscenarios/Binary.py`. Observational data is stored in `scenarios/sims/` (for agent use) and detailed simulation data for verification is in `scenarios/detailed_sims/`.
+    Uses high-precision simulations capturing realistic two-body orbital dynamics. Simulations are configured in `scripts/scenarios_config.py` and are simulated in `generalscenarios/Binary.py`. Observational data is stored in `scenarios/sims/` (for agent use) and detailed simulation data for verification is in `scenarios/detailed_sims/`.
 
--   **Partial Observability Modes:**
+-   **Partial Observability:**
     Agents can operate in two modes:
-    1.  **Full-Observation (full-obs):** Access the complete simulation data at once (e.g., via `scripts/run_agent.py`).
-    2.  **Budgeted Observation (budget-obs):** Collect observations incrementally under a defined observation budget (e.g., via `scripts/run_agent.py --row-wise`). This mode emphasizes strategic observation planning.
+    1.  **Full-Observation (full-obs):** Access the complete simulation data at once via a `pandas` dataframe (e.g., via `scripts/run_agent.py`).
+    2.  **Budgeted Observation (budget-obs):** Agent must collect observations incrementally under a defined observation budget, usually 100 observations (e.g., via `scripts/run_agent.py --row-wise`). This mode emphasizes strategic observation planning.
 
--   **Wide Range of Tasks:**
-    Over 50 tasks that mirror real astrophysical problems, defined in individual Python files within the `scenarios/` directory (e.g., `mass_star1.py`, `eccentricity.py`). These tasks include:
-    -   Inferring stellar masses.
-    -   Calculating orbital elements (period, eccentricity, periastron).
-    -   Determining system energy.
-    -   Handling out-of-distribution scenarios like modified gravity or drag forces, testing generalization capabilities.
+-   **Tasks:**
     Each task is assigned to multiple simulation variations, configured in `scripts/scenarios_config.json`. See Appendix B of our paper for a detailed description of benchmark problems.
 
 -   **Expert Reference Solutions & Ground Truth:**
-    -   **Expert Reference Solutions:** Implemented in each task's `.py` file (e.g., `scenarios/mass_star1.py::Scenario.true_answer(return_empirical=True)`), these solutions emulate an expert's approach using only the observable data (full-obs or budget-obs with uniform sampling). They serve as a strong baseline for agent performance and are generated using `scripts/run_expert_solution.py`.
-    -   **Ground-Truth Verification:** The same `true_answer` methods can also return exact values derived from simulation inputs or Rebound's internal calculations (when `verification=True` and `return_empirical=False`). This is used for verifying the correctness of the environment and the empirical solutions.
+    -   **Expert Reference Solutions:** Implemented in each task's `.py` file (e.g., `scenarios/mass_star1.py`), these solutions emulate an expert's approach using only the observable data (full-obs or budget-obs with uniform sampling). They serve as a  baseline for agent performance and are generated using `scripts/run_expert_solution.py`.
+    -   The same `true_answer` methods can also return exact values derived from simulation inputs or the simulations internal calculations (when `verification=True` and `return_empirical=False`). This is used for verifying the correctness of the environment and the empirical solutions.
 
--   **Agentic Framework:**
+-   **Agent:**
     The benchmark is designed for iterative, tool-augmented agents. The provided baseline agent (`agents/tabular_agent.py`) uses:
     -   An `Observe` tool for taking measurements at specific times (`agents/tools/observe_tool.py`).
     -   A Python REPL tool for data analysis (`agents/tools/python_repl_tool.py`).
@@ -41,22 +38,13 @@ The benchmark is inspired by the historical development of science (the two-body
 
 ## Getting Started
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/NolanKoblischke/GravityBench.git
-    cd GravityBench
-    ```
+1.  **Install Dependencies:**
 
-2.  **Install Dependencies:**
-
-    We provide three installation methods. **uv is recommended** for the fastest and most reliable setup:
-
-    ### Option A: uv (Recommended) ⭐
+    ### Option A: uv (Recommended)
     
     [uv](https://docs.astral.sh/uv/) is a fast Python package manager that automatically handles virtual environments.
     
     ```bash
-    # Install uv if you haven't already
     curl -LsSf https://astral.sh/uv/install.sh | sh
     # Or: pip install uv
     
@@ -67,28 +55,13 @@ The benchmark is inspired by the historical development of science (the two-body
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
     ```
 
-    Then run commands normally:
-    ```bash
-    python scripts/run_agent.py --scenarios period --model gpt-4o
-    ```
-
     ### Option B: Conda/Mamba
-    
-    If you prefer conda environments:
     ```bash
     # Install dependencies using conda
     conda env create -f environment.yml
     conda activate gravitybench
     ```
-    
-    Then run commands normally:
-    ```bash
-    python scripts/run_agent.py --scenarios period --model gpt-4o
-    ```
-
     ### Option C: pip
-    
-    For traditional pip installation:
     ```bash
     # Create and activate virtual environment
     python -m venv .venv
@@ -97,88 +70,40 @@ The benchmark is inspired by the historical development of science (the two-body
     # Install dependencies
     pip install -r requirements.txt
     ```
-    
-    Then run commands normally:
-    ```bash
-    python scripts/run_agent.py --scenarios period --model gpt-4o
-    ```
 
-3.  **Configure API Keys:**
+2.  **Configure API Keys:**
     
-    Create a `.env` file with your API keys:
-    ```bash
-    # Create .env file
-    cat > .env << EOF
-    OPENAI_API_KEY=your_openai_api_key_here
-    ANTHROPIC_API_KEY=your_anthropic_api_key_here
-    EOF
-    ```
-    
-    Or copy and edit the example:
-    ```bash
-    cp .env.example .env
-    # Edit .env with your preferred editor
-    ```
+    Create a `.env` file with your API keys using `.env.example`.
 
-4.  **Configure Agent Parameters (Optional):**
-    Global agent parameters like temperature, max attempts, and API call limits can be adjusted in `config.json`.
-
-5.  **Run a Scenario (Full Observations):**
+3. **Run a Scenario (Full Observations):**
     This example runs the agent on the `period.py` scenario task using the `gpt-4o` model with full observation access.
     
     ```bash
-    python scripts/run_agent.py --scenarios period --model gpt-4o
+    python scripts/run_agent.py --scenarios modified_gravity_power_law --model gpt-4.1
     ```
     
     Outputs (a JSON file and an HTML report) will be saved in a new subdirectory under `outputs/`, named like `outputs/gpt-4o_<timestamp>/`.
 
-6.  **Run a Scenario (Budgeted Observations):**
+4.  **Run a Scenario (Budgeted Observations):**
     This example runs the agent on the `max_velocity_star1.py` scenario task, using a Claude model, with a budget of 100 total observations, requesting up to 10 at a time.
     
     ```bash
     python scripts/run_agent.py \
         --scenarios max_velocity_star1 \
-        --model claude-3-5-sonnet-20241022 \
+        --model gpt-4.1 \
         --row-wise \
         --max-observations-total 100 \
         --max-observations-per-request 10
     ```
 
-7.  **Explore Results:**
+5.  **Explore Results:**
     After each run, navigate to the `outputs/` (or `outputs_range_of_N/`) directory. Inside the run-specific subfolder (e.g., `outputs/gpt-4o_<timestamp>/`), you will find:
     -   A `<model>_<timestamp>.json` file containing detailed run data.
     -   A `<model>_<timestamp>.html` file, which is an interactive report. Open this in your browser to see a summary and step-by-step logs for each scenario attempt.
 
-## Repository Structure
+## Running your own models and agents
 
--   **`agents/`**: Contains the main agent logic (`tabular_agent.py`) and its tools (`observe_tool.py`, `python_repl_tool.py`, `submit_answer_tool.py`).
--   **`analysis/`**: Scripts for plotting, generating LaTeX tables, and other analyses to reproduce paper results.
--   **`generalscenarios/`**: Core `Binary.py` class for setting up and running Rebound-based binary star simulations.
--   **`scenarios/`**: Individual Python files defining specific physics tasks (e.g., `mass_star1.py`, `eccentricity.py`). Each file includes the task prompt and the expert reference solution logic.
--   **`scripts/`**:
-    -   `scenarios_config.py`: Defines `BinaryScenario` variations (initial conditions, masses, etc.) and provides helper functions (`get_scenario`, `get_all_scenarios`) to instantiate task-specific scenario objects. It reads configurations from `scripts/scenarios_config.json`.
-    -   `run_agent.py`: Main script for running an agent on specified tasks. Key options include `--row-wise`, `--max-observations-total`, `--simulate-all`, and `--parallel`.
-    -   `run_agent_range_of_budgets.py`: Similar to `run_agent.py` but specialized for scanning multiple observation budgets.
-    -   `run_expert_solution.py`: Generates the expert reference solutions for each scenario.
-    -   `task_utils.py`: Helper functions used by the expert solutions in `scenarios/` to calculate physical quantities.
-    -   `format_utils.py`: Utility functions for formatting agent traces and converting them to JSON/HTML.
--   **`outputs/`** & **`outputs_range_of_N/`**: Default directories for storing raw run results (JSON and HTML).
-    -   `outputs/combine_results.py`: Merges multiple JSON outputs from `outputs/` into a single `combined_results.csv` and `chat_histories.csv`.
-    -   `outputs_range_of_N/aggregate.py`: Aggregates results from `outputs_range_of_N/` subfolders.
--   **`tests/`**: Unit tests for scenario creation (`test_scenarios.py`) and simulation execution (`test_simulations.py`).
--   **`config.json`**: Global configuration for agent runs (e.g., `TEMPERATURE`, `MAX_ATTEMPTS`, `MAX_TIME_PER_TASK`).
--   **`.env.example`**: Template for the `.env` file, which stores API keys.
--   **`environment.yml`**: Conda environment specification file for dependencies.
--   **`requirements.txt`**: Pip requirements file for dependencies.
--   **`LICENSE`**: Project license file.
-
-## Running Tests
-
-To ensure the environment and core logic are functioning correctly, you can run the unit tests:
-
-```bash
-python -m unittest discover -s tests
-```
+To run your own model you can modify `agents/tabular_agent.py`. To run your own agent framework, we recommend adapting our `quick_start.py` which contains a minimal all-in-one example for a simple agent framework using our [Huggingface dataset](https://huggingface.co/datasets/GravityBench/GravityBench).
 
 ## Reproducing Paper Results
 
@@ -189,7 +114,6 @@ To reproduce the main results presented in the paper (arXiv:2501.18411), follow 
     *   **Full-Observation Mode:**
         ```bash
         python scripts/run_agent.py --simulate-all --model gpt-4o-mini-2024-07-18
-        python scripts/run_agent.py --simulate-all --model claude-3-5-sonnet-20241022
         ```
     *   **Budgeted-Observation Mode (e.g., 100 observations):**
         ```bash
@@ -198,7 +122,6 @@ To reproduce the main results presented in the paper (arXiv:2501.18411), follow 
     *   **Varying Observation Budgets (for specific scenarios/models, see Figure 2 in paper):**
         ```bash
         python scripts/run_agent_range_of_budgets.py --model gpt-4o-2024-11-20 --scenarios max_velocity_star1 periastron --variation "9.6 M, 3.1 M" --variation "3.1 M, 0.18 M, Elliptical, Single Orbit"
-        python scripts/run_agent_range_of_budgets.py --model claude-3-5-sonnet-20241022 --scenarios max_velocity_star1 periastron --variation "9.6 M, 3.1 M" --variation "3.1 M, 0.18 M, Elliptical, Single Orbit"
         ```
 
 2.  **Generate Expert Baseline Data:**
