@@ -3,7 +3,7 @@
 [![Paper](https://img.shields.io/badge/arXiv-2501.18411-B31B1B)](https://arxiv.org/abs/2501.18411v2)
 [![Website](https://img.shields.io/badge/Website-gravitybench.github.io-blue)](https://gravitybench.github.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
-[![Hugging Face](https://img.shields.io/badge/HuggingFace-GravityBench-orange)](https://huggingface.co/spaces/gravitybench/GravityBench)
+[![Hugging Face](https://img.shields.io/badge/HuggingFace-GravityBench-orange)](https://huggingface.co/datasets/GravityBench/GravityBench)
 
 This repository contains the code and benchmark for the ICML 2025 paper: **"Gravity-Bench-v1: A Benchmark on Gravitational Physics Discovery for Agents"** (arXiv:2501.18411). Visit our project website at [gravitybench.github.io](https://gravitybench.github.io/) for discussion on the results.
 
