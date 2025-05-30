@@ -1,6 +1,6 @@
 # Gravity-Bench: A Benchmark for AI Discovery of Gravitational Physics
 
-[![Paper](https://img.shields.io/badge/arXiv-2501.18411-B31B1B)](https://arxiv.org/abs/2501.18411)
+[![Paper](https://img.shields.io/badge/arXiv-2501.18411-B31B1B)](https://arxiv.org/abs/2501.18411v2)
 [![Website](https://img.shields.io/badge/Website-gravitybench.github.io-blue)](https://gravitybench.github.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
@@ -36,6 +36,7 @@ These questions challenge AI agents with skills that mirror real-world science, 
     The benchmark is designed for iterative, tool-augmented agents. The provided baseline agent (`agents/tabular_agent.py`) uses:
     -   An `Observe` tool for taking measurements at specific times (`agents/tools/observe_tool.py`).
     -   A Python REPL tool for data analysis (`agents/tools/python_repl_tool.py`).
+        - Warning: The Python REPL tool executes arbitrary code without containerization and should be used with caution.
     -   A `submit_answer` tool for providing the final numeric or boolean answer (`agents/tools/submit_answer_tool.py`).
     This agent is executed using `scripts/run_agent.py` or `scripts/run_agent_range_of_budgets.py` (for varying observation budgets). The agent prompts are detailed in Appendix D of our paper.
 
@@ -55,7 +56,7 @@ These questions challenge AI agents with skills that mirror real-world science, 
     uv sync
     
     # Activate the environment (optional - uv run will auto-activate)
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+    source .venv/bin/activate
     ```
 
     ### Option B: Conda/Mamba
@@ -68,11 +69,13 @@ These questions challenge AI agents with skills that mirror real-world science, 
     ```bash
     # Create and activate virtual environment
     python -m venv .venv
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+    source .venv/bin/activate
     
     # Install dependencies
     pip install -r requirements.txt
     ```
+
+**Note for Windows Users:** The benchmark code relies on the `rebound` physics simulation library, which does not support Windows. Windows users should use our standalone `quick_start.py` script instead, which works with our [Huggingface dataset](https://huggingface.co/datasets/GravityBench/GravityBench) and doesn't require `rebound`. See the "Running your own models and agents" section below for details.
 
 2.  **Configure API Keys:**
     
