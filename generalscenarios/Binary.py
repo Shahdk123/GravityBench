@@ -4,6 +4,7 @@ import numpy as np
 import rebound  # N-body simulation package
 import csv
 import pandas as pd
+import matplotlib.pyplot as plt
 from typing import Union, List
 from scipy.interpolate import CubicSpline  # For position interpolation
 
@@ -20,7 +21,8 @@ class Binary():
     def __init__(self, star1_mass, star2_mass, star1_pos, star2_pos, star1_momentum, 
                  star2_momentum, maxtime, max_observations, max_observations_per_request, 
                  filename, prompt, final_answer_units, drag_tau=None, 
-                 mod_gravity_exponent=None, units=('m', 's', 'kg'), skip_simulation=False):
+                 mod_gravity_exponent=None, units=('m', 's', 'kg'), skip_simulation=False,
+                 enable_noise=False, noise_type=None, noise_level=0.0, noise_seed=None):
         """
         Initialize binary system with physical parameters and simulation settings
         Args:
@@ -28,6 +30,10 @@ class Binary():
             mod_gravity_exponent: Gravity law modification (None = Newtonian)
             units: Unit system for simulation (SI, Astronomical, or CGS)
             skip_simulation: Load existing data instead of running new simulation
+            enable_noise: Boolean to enable/disable noise
+            noise_type: Type of noise to add ('gaussian', 'linear_growth', 'exponential_growth', 'power_law')
+            noise_level: Magnitude of noise
+            noise_seed: Random seed for reproducible noise
         """
         
         # Store system parameters
@@ -47,6 +53,14 @@ class Binary():
         self.drag_tau = drag_tau  # Linear drag coefficient
         self.mod_gravity_exponent = mod_gravity_exponent  # Gravity law modification
         self.units = units  # Unit system tuple
+        self.enable_noise = enable_noise
+        self.noise_type = noise_type
+        self.noise_level = noise_level
+        self.noise_seed = noise_seed
+
+        # Set random seed if specified
+        if noise_seed is not None:
+            np.random.seed(noise_seed)
 
         # Initialize REBOUND simulation
         self.sim = rebound.Simulation()
@@ -127,6 +141,26 @@ When using `Observe`:
 3. You can observe the system up to a total of {self.max_observations} times and you can observe up to {self.max_observations_per_request} times per observational request which is the maximum length of the `times_requested` list.
 4. After each observation, the dataframe `row_wise_results.df` will be updated. It contains columns: {', '.join(self.df.columns)}. You can access it using the code interpreter tool. For example, to access the first five rows, print(row_wise_results.df.head(n=5))""" 
 + self.end_prompt)
+
+    def _generate_noise(self, time):
+        """Generate noise based on current settings"""
+        if not self.enable_noise or self.noise_level == 0:
+            return 0.0
+            
+        if self.noise_type == 'gaussian':
+            return np.random.normal(loc=0, scale=self.noise_level)
+            
+        elif self.noise_type == 'linear_growth':
+            return np.random.normal(loc=0, scale=self.noise_level * time)
+            
+        elif self.noise_type == 'exponential_growth':
+            return np.random.normal(loc=0, scale=self.noise_level * np.exp(time))
+            
+        elif self.noise_type == 'power_law':
+            return np.random.normal(loc=0, scale=self.noise_level * time**1.05)
+            
+        else:
+            raise ValueError(f"Unknown noise type: {self.noise_type}")
 
     def simulate(self, drag_tau=None, mod_gravity_exponent=None, units=('m', 's', 'kg')):
         """Run N-body simulation and save results to CSV files"""
@@ -218,7 +252,7 @@ When using `Observe`:
             ]
             writer_positions.writerow(header_positions)
             writer_detailed.writerow(header_detailed)
-
+                    
             # Main simulation loop
             time_passed = 0
             while time_passed < self.maxtime:
@@ -229,8 +263,21 @@ When using `Observe`:
                 p1 = self.sim.particles[0]
                 p2 = self.sim.particles[1]
 
+                # Apply noise if enabled
+                if self.enable_noise:
+                    noise = self._generate_noise(time_passed)
+                    p1x_noise = p1.x + noise
+                    p1y_noise = p1.y + noise
+                    p1z_noise = p1.z + noise
+                    p2x_noise = p2.x + noise
+                    p2y_noise = p2.y + noise
+                    p2z_noise = p2.z + noise
+                else:
+                    p1x_noise, p1y_noise, p1z_noise = p1.x, p1.y, p1.z
+                    p2x_noise, p2y_noise, p2z_noise = p2.x, p2.y, p2.z
+                
                 # Write basic position data
-                data_positions = [time_passed, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z]
+                data_positions = [time_passed, p1x_noise, p1y_noise, p1z_noise, p2x_noise, p2y_noise, p2z_noise]
                 writer_positions.writerow(data_positions)
 
                 # Calculate detailed orbital parameters
@@ -240,10 +287,10 @@ When using `Observe`:
                 star2_accel = force / p2.m
                 orbit = p2.orbit(primary=p1)  # Calculate orbital elements
 
-                # Write detailed simulation data
+                # Write detailed simulation data (without noise for internal calculations)
                 data_detailed = [
                     time_passed,
-                    p1.x, p1.y, p1.z, p2.x, p2.y, p2.z,
+                    p1x_noise, p1y_noise, p1z_noise, p2x_noise, p2y_noise, p2z_noise,
                     p1.vx, p1.vy, p1.vz, p2.vx, p2.vy, p2.vz,
                     p1.m, p2.m, separation, force, star1_accel, star2_accel,
                     orbit.h, orbit.P, orbit.n, orbit.a, orbit.e,
@@ -251,6 +298,7 @@ When using `Observe`:
                 ]
                 writer_detailed.writerow(data_detailed)
 
+    
     def convert_back_to_SI(self):
         """Convert all parameters to SI units for final answer validation"""
         # Return early if already in SI units
@@ -308,11 +356,9 @@ When using `Observe`:
         Returns:
             Status message with observation results and remaining budget
         """
-        # Normalize input to list and ensure all values are floats
+        # Normalize input to list
         if not isinstance(times_requested, list):
-            times_requested = [float(times_requested)]
-        else:
-            times_requested = [float(t) for t in times_requested]
+            times_requested = [times_requested]
 
         # Validate request limit
         if len(times_requested) > maximum_observations_per_request:
@@ -369,7 +415,7 @@ When using `Observe`:
                 observations.append(self.state)
 
         # Update observational dataframe
-        new_rows = pd.DataFrame(observations, columns=['time', 'star1_x', 'star1_y', 'star1_z', 'star2_x', 'star2_y', 'star2_z'])
+        new_rows = pd.DataFrame(observations, columns=self.row_wise_results.df.columns)
         self.row_wise_results.df = pd.concat([self.row_wise_results.df, new_rows], ignore_index=True)
 
         # Build result message
@@ -381,6 +427,7 @@ When using `Observe`:
             if observations_to_process < len(times_requested):
                 result += f"Only {observations_to_process} out of {len(times_requested)} requested observations were added due to reaching the maximum observation limit. "
             result += f"You have {self.max_observations - self.number_of_observations_requested} observations remaining in your total budget. "
+
         
         # Add warnings if needed
         if max_time_exceeded:
