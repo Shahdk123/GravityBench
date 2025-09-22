@@ -9,15 +9,23 @@ from agents.tools.python_repl_tool import python_repl_tool, execute_python_repl
 from agents.tools.submit_answer_tool import submit_answer_tool, execute_submit_answer
 
 load_dotenv()
+
 class BinarySim:
-    def __init__(self, csv, task, units, truth):
+    def __init__(self, csv, task, units, truth, enable_noise=False, 
+                 noise_type=None, noise_level=0.0, noise_seed=None):
         self.df = pd.read_csv(StringIO(csv))
         self.truth = float(truth)
         self.req = 0  # total observations used
         t0, t1, n = self.df.time.min(), self.df.time.max(), len(self.df)
+        
+        # Add noise info to prompt if enabled
+        noise_info = ""
+        if enable_noise:
+            noise_info = f"\nNote: Observations contain {noise_type} noise (level: {noise_level})."
+        
         self.prompt = (
             f"You are a physics discovery agent. Your task is: {task}\n\n"
-            f"Dataset spans {t0:.2f}–{t1:.2f} with {n} rows.\n"
+            f"Dataset spans {t0:.2f}–{t1:.2f} with {n} rows.{noise_info}\n"
             "Use Observe(times_requested) to sample <=100 rows (<=10 per call).\n"
             "Analyse with PythonREPL where 'row_wise_results' stores your samples.\n"
             f"Expected answer units: {units}. Submit with submit_answer(answer)."
@@ -87,13 +95,37 @@ class Agent:
 
 def main():
     data = datasets.load_dataset("GravityBench/GravityBench")["test"][0]
-    sim = BinarySim(data['simulation_csv_content'], data['task_prompt'], data['expected_units'], data['true_answer'])
+    
+    # Noise configuration - control from here
+    ENABLE_NOISE = True  # Set to False to disable noise completely
+    NOISE_TYPE = 'gaussian'  # Options: 'gaussian', 'linear_growth', 'exponential_growth', 'power_law'
+    NOISE_LEVEL = 0.1  # Adjust this value to control noise magnitude
+    NOISE_SEED = 42  # Set to None for random noise, or an integer for reproducible noise
+    
+    sim = BinarySim(
+        data['simulation_csv_content'], 
+        data['task_prompt'], 
+        data['expected_units'], 
+        data['true_answer'],
+        enable_noise=ENABLE_NOISE,
+        noise_type=NOISE_TYPE,
+        noise_level=NOISE_LEVEL,
+        noise_seed=NOISE_SEED
+    )
+    
     agent = Agent(sim)
     ans = agent.run()
     print("Ans:", ans, "Truth:", sim.truth, f"Obs {sim.req}/100")
 
     err = abs(float(ans) - sim.truth) / sim.truth * 100
     print(f"Error {err:.2f}% (threshold {data['budget_obs_threshold_percent']}%)")
+    
+    # Print noise configuration
+    if ENABLE_NOISE:
+        print(f"Noise: {NOISE_TYPE} with level {NOISE_LEVEL}" + 
+              (f" (seed: {NOISE_SEED})" if NOISE_SEED is not None else ""))
+    else:
+        print("Noise: Disabled")
 
 if __name__ == "__main__":
     main()
