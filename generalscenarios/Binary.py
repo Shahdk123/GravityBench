@@ -57,15 +57,15 @@ class Binary:
 
     def _generate_noise(self, time):
         if not self.enable_noise or self.noise_level == 0:
-            return 0.0
+            return np.zeros(6)
         if self.noise_type == 'gaussian':
-            return np.random.normal(0, self.noise_level)
+            return np.random.normal(0, self.noise_level, size=6)
         elif self.noise_type == 'linear_growth':
-            return np.random.normal(0, self.noise_level*time)
+            return np.random.normal(0, self.noise_level*time, size=6)
         elif self.noise_type == 'exponential_growth':
-            return np.random.normal(0, self.noise_level*np.exp(time))
+            return np.random.normal(0, self.noise_level*np.exp(time), size=6)
         elif self.noise_type == 'power_law':
-            return np.random.normal(0, self.noise_level*time**1.05)
+            return np.random.normal(0, self.noise_level*time**1.05, size=6)
         else:
             raise ValueError(f"Unknown noise type: {self.noise_type}")
 
@@ -111,8 +111,8 @@ class Binary:
 
                 if self.enable_noise:
                     noise = self._generate_noise(time_passed)
-                    p1x,p1y,p1z = p1.x+noise, p1.y+noise, p1.z+noise
-                    p2x,p2y,p2z = p2.x+noise, p2.y+noise, p2.z+noise
+                    p1x,p1y,p1z = p1.x+noise[0], p1.y+noise[1], p1.z+noise[2]
+                    p2x,p2y,p2z = p2.x+noise[3], p2.y+noise[4], p2.z+noise[5]
                 else:
                     p1x,p1y,p1z = p1.x,p1.y,p1.z
                     p2x,p2y,p2z = p2.x,p2.y,p2.z
@@ -143,4 +143,3 @@ class Binary:
 
         self.row_wise_results.df = pd.concat([self.row_wise_results.df,pd.DataFrame(observations, columns=self.row_wise_results.df.columns)],ignore_index=True)
         return f"{to_process} observations added. Remaining: {self.max_observations-self.number_of_observations_requested}"
-
