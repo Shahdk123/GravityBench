@@ -5,6 +5,7 @@ import csv
 import pandas as pd
 from typing import Union, List
 from scipy.interpolate import CubicSpline
+import noise_config
 
 class RowWiseResults:
     """Stores and manages observational data collected through row-wise access"""
@@ -18,7 +19,7 @@ class Binary:
                  star2_momentum, maxtime, max_observations, max_observations_per_request,
                  filename, prompt, final_answer_units, drag_tau=None,
                  mod_gravity_exponent=None, units=('m', 's', 'kg'), skip_simulation=False,
-                 enable_noise=False, noise_type=None, noise_level=0.0, noise_seed=None):
+                 enable_noise=None, noise_type=None, noise_level=None, noise_seed=None):
         
         self.star1_mass = star1_mass
         self.star2_mass = star2_mass
@@ -36,12 +37,15 @@ class Binary:
         self.drag_tau = drag_tau
         self.mod_gravity_exponent = mod_gravity_exponent
         self.units = units
-        self.enable_noise = enable_noise
-        self.noise_type = noise_type
-        self.noise_level = noise_level
-        self.noise_seed = noise_seed
-        if noise_seed is not None:
-            np.random.seed(noise_seed)
+        
+        # Use noise_config settings if not explicitly provided
+        self.enable_noise = enable_noise if enable_noise is not None else noise_config.ENABLE_NOISE
+        self.noise_type = noise_type if noise_type is not None else noise_config.NOISE_TYPE
+        self.noise_level = noise_level if noise_level is not None else noise_config.NOISE_LEVEL
+        self.noise_seed = noise_seed if noise_seed is not None else noise_config.NOISE_SEED
+        
+        if self.noise_seed is not None:
+            np.random.seed(self.noise_seed)
 
         # Initialize REBOUND
         self.sim = rebound.Simulation()
