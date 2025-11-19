@@ -55,15 +55,15 @@ class Agent:
         max_observations_per_request (int): Maximum number of observations per request (only used if row_wise is True).
         max_observations_total (int): Maximum total number of observations allowed (only used if row_wise is True).
     """
-    def __init__(self, environment, model, row_wise,
+    def __init__(self, environment, model, row_wise, 
                  temperature, max_tokens_per_task, max_tool_calls_per_task, max_execution_time, # New params
                  max_observations_per_request=10, max_observations_total=10, reasoning_effort=None):
         self.environment = environment
         self.model = model
         self.row_wise = row_wise
-        self.max_tokens = max_tokens_per_task
-        self.max_tool_calls = max_tool_calls_per_task
-        self.max_execution_time = max_execution_time
+        self.max_tokens = max_tokens_per_task 
+        self.max_tool_calls = max_tool_calls_per_task 
+        self.max_execution_time = max_execution_time 
         self.environment.binary_sim.number_of_observations_requested = 0
         self.max_observations_per_request = max_observations_per_request
         self.max_observations_total = max_observations_total
@@ -72,7 +72,7 @@ class Agent:
         print(f'INTERNAL: Max execution time: {self.max_execution_time}')
         if self.reasoning_effort:
             print(f'INTERNAL: Reasoning effort: {self.reasoning_effort}')
-        self.temperature = temperature
+        self.temperature = temperature 
         self.package_names = "numpy scipy sklearn statsmodels pandas"
         self.df = self.environment.binary_sim.df
         self.available_packages = {
@@ -86,16 +86,12 @@ class Agent:
             self.available_packages.update({
                 "row_wise_results": self.row_wise_results
             })
-            
-            # FIX: Use fallback prompt for row-wise mode
-            self.exploration_prompt = "Analyze the observational data row by row. Use the Observe tool to request data points, then analyze patterns to discover physical laws."
+            self.exploration_prompt = self.environment.binary_sim.row_wise_prompt
         else:
             self.available_packages.update({
                 "df": self.df
             })
-            
-            # FIX: Use fallback prompt for full-table mode
-            self.exploration_prompt = "Analyze the complete dataset to discover physical laws or patterns. Use the available tools to explore the data and submit your final answer."
+            self.exploration_prompt = self.environment.binary_sim.full_table_prompt
         
         print(f'INTERNAL: {self.exploration_prompt}')
         self.tools = []
@@ -123,7 +119,7 @@ class Agent:
 
     def _convert_tools_for_anthropic(self, tools):
         """Convert OpenAI tools to Anthropic format"""
-        return [{"name": t["function"]["name"], "description": t["function"]["description"],
+        return [{"name": t["function"]["name"], "description": t["function"]["description"], 
                 "input_schema": t["function"]["parameters"]} for t in tools if t["type"] == "function"]
 
     def run(self, verbose=True):
@@ -150,7 +146,7 @@ class Agent:
             start_time = time.time()
             tool_calls_made = 0
 
-            while (tool_calls_made < self.max_tool_calls and
+            while (tool_calls_made < self.max_tool_calls and 
                    time.time() - start_time < self.max_execution_time - 2):  # 2s buffer
                 print(f"INTERNAL: Tool calls made: {tool_calls_made}/{self.max_tool_calls}")
                 print(f"INTERNAL: Time elapsed: {time.time() - start_time:.2f}/{self.max_execution_time}s")
