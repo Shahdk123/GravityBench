@@ -19,6 +19,7 @@ from multiprocessing import TimeoutError
 from queue import Empty
 import threading
 import numpy as np
+import glob
 
 CONFIG_FILE_PATH = 'config.json'
 
@@ -33,25 +34,33 @@ except json.JSONDecodeError:
     print(f"Error: Could not decode JSON from '{CONFIG_FILE_PATH}'. Please check its format.")
     exit(1)
 
-# Configuration constants from environment variables
+# Configuration constants from config.json
 TEMPERATURE = float(config.get("TEMPERATURE", 0.0))
 MAX_ATTEMPTS = int(config.get("MAX_ATTEMPTS", 3))
 MAX_TIME_PER_TASK = int(config.get("MAX_TIME_PER_TASK", 12000))
 MAX_TOKENS_PER_TASK = int(config.get("MAX_TOKENS_PER_TASK", 300000))
 MAX_TOOL_CALLS_PER_TASK = int(config.get("MAX_TOOL_CALLS_PER_TASK", 100))
 
-def cleanup_sims_folder():
-    """Delete all CSV files in the scenarios/sims folder before each run"""
-    sims_folder = "scenarios/sims"
-    if os.path.exists(sims_folder):
-        for filename in os.listdir(sims_folder):
-            if filename.endswith('.csv'):
-                file_path = os.path.join(sims_folder, filename)
-                os.remove(file_path)
-                print(f"INTERNAL: Deleted previous CSV: {file_path}")
-    else:
-        os.makedirs(sims_folder, exist_ok=True)
-    print("INTERNAL: Sims folder cleaned up - ready for new CSV files")
+def cleanup_old_csv_files():
+    """Delete all old CSV files before generating new simulations"""
+    sims_dir = 'scenarios/sims/'
+    detailed_dir = 'scenarios/detailed_sims/'
+    
+    deleted_count = 0
+    
+    for directory in [sims_dir, detailed_dir]:
+        if os.path.exists(directory):
+            files = glob.glob(os.path.join(directory, '*.csv'))
+            for f in files:
+                try:
+                    os.remove(f)
+                    deleted_count += 1
+                    print(f"Deleted: {f}")
+                except Exception as e:
+                    print(f"Warning: Could not delete {f}: {e}")
+    
+    print(f"Cleaned up {deleted_count} old CSV files")
+    return deleted_count
 
 def output_writer(queue, output_dir):
     """
@@ -341,9 +350,6 @@ def main(row_wise, simulate_all=False, scenario_filenames=None, max_observations
     Returns:
         list: All collected results
     """
-    # CLEANUP: Delete all previous CSV files and prepare for new ones
-    cleanup_sims_folder()
-    
     # Setup output directory
     datetime_now = datetime.datetime.now()
     formatted_datetime = datetime_now.strftime("%d-%m_%H_%M_%S")
@@ -364,6 +370,14 @@ def main(row_wise, simulate_all=False, scenario_filenames=None, max_observations
     else:
         print("Please provide a list of scenarios to run or use --simulate-all.")
         return
+
+    # NEW: Clean up old CSV files before running
+    print("Cleaning up old CSV files...")
+    cleanup_old_csv_files()
+    
+    # NEW: Ensure directories exist
+    os.makedirs('scenarios/sims/', exist_ok=True)
+    os.makedirs('scenarios/detailed_sims/', exist_ok=True)
 
     # Parallel execution setup
     if parallel:
@@ -413,6 +427,7 @@ def main(row_wise, simulate_all=False, scenario_filenames=None, max_observations
     else:
         for scenario_name in tqdm.tqdm(scenarios_to_run):
             for variation_name in scenarios_to_run[scenario_name]['variations']:
+                # NEW: Each get_scenario call will now generate fresh CSV with new noise
                 scenario_module = get_scenario(scenario_name=scenario_name, variation_name=variation_name, row_wise=row_wise, max_observations_total=max_observations_total, max_observations_per_request=max_observations_per_request, scenario_folder='scenarios')
                 run_results = run_agent_on_scenario(row_wise, scenario_module, scenario_name, variation_name, model,
                                                     max_observations_total, MAX_TIME_PER_TASK, max_observations_per_request, req_successful_attempts_per_q, reasoning_effort)
@@ -494,9 +509,6 @@ if __name__ == "__main__":
                        help='Reasoning effort for supported models (high, auto, none)')
 
     args = parser.parse_args()
-
-    # Cleanup before any scenario runs (for direct script execution)
-    cleanup_sims_folder()
 
     # Input validation
     if not args.row_wise:
